@@ -19,32 +19,49 @@ mvn install
   <version>0.1</version>
 </dependency>
 ```
-4. Create a Guice Module with a ApplicationModule annotation
+4. Create a Guice Module as usual but add a ApplicationModule annotation. The argument to @ApplicationModule
+is the java package to scan for Rest resource classes.
 ```java
+package com.davelpz.rweb;
+
 import com.davelpz.resteasy.ApplicationModule;
+import com.davelpz.rweb.impl.DBUserRepository;
 import com.google.inject.AbstractModule;
 
-@ApplicationModule("package.to.scan")
+@ApplicationModule("com.davelpz.rweb")
 public class RestModule extends AbstractModule {
     public void configure() {
-    //guice bindings
+        binder().bind(UserRepository.class).to(DBUserRepository.class);
     }
 }
 ```
 5. Create your Rest Resources as usual, for example
 ```java
+package com.davelpz.rweb;
+
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/rest/hello")
-public class HelloWorld {
+@Path("/rest/user")
+public class UserResource {
+
+    private final UserRepository userRepository;
+
+    @Inject
+    public UserResource(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    public String helloWorld() {
-        return "Hello World";
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public User findUser(@PathParam("id") int id) {
+        return userRepository.findUser(id);
     }
 }
 ```
+6. Build and deploy your web app.
